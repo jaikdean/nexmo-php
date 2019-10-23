@@ -34,7 +34,7 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
 
     public static function getCollectionPath()
     {
-        return '/beta/' . self::getCollectionName();
+        return '/v0.1/' . self::getCollectionName();
     }
 
     public function hydrateEntity($data, $idOrConversation)

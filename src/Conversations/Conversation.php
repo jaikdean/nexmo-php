@@ -6,6 +6,8 @@
  * @license   https://github.com/Nexmo/nexmo-php/blob/master/LICENSE.txt MIT License
  */
 
+declare(strict_types = 1);
+
 namespace Nexmo\Conversations;
 
 use Nexmo\Client\ClientAwareInterface;
@@ -20,6 +22,7 @@ use Nexmo\User\User;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Request;
 use Nexmo\Client\Exception;
+use Nexmo\User\Filter;
 
 class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializableInterface, ClientAwareInterface
 {
@@ -35,24 +38,67 @@ class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializ
         $this->data['id'] = $id;
     }
 
-    public function setName($name)
+    public function setName(string $name) : self
     {
         $this->data['name'] = $name;
         return $this;
     }
 
-    public function setDisplayName($name)
+    public function setDisplayName(string $name) : self
     {
         $this->data['display_name'] = $name;
         return $this;
     }
 
-    public function getId()
+    public function setImageUrl(string $url) : self
+    {
+        $this->data['image_url'] = $url;
+        return $this;
+    }
+
+    public function setProperties(array $properties) : self
+    {
+        $this->data['properties'] = $properties;
+        return $this;
+    }
+
+    public function setProperty(string $key, string $value) : self
+    {
+        $this->data['properties'][$key] = $value;
+        return $this;
+    }
+
+    public function getId() : string
     {
         if (isset($this->data['uuid'])) {
             return $this->data['uuid'];
         }
         return $this->data['id'];
+    }
+
+    public function getName() : string
+    {
+        return $this->data['name'];
+    }
+
+    public function getDisplayName() : string
+    {
+        return $this->data['display_name'];
+    }
+
+    public function getImageUrl() : string
+    {
+        return $this->data['image_url'];
+    }
+
+    public function getProperties() : array
+    {
+        return $this->data['properties'];
+    }
+
+    public function getProperty($key) : array
+    {
+        return $this->data['properties'];
     }
 
     public function __toString()
@@ -61,7 +107,7 @@ class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializ
     }
 
 
-    public function get()
+    public function get() : self
     {
         $request = new Request(
             $this->getClient()->getApiUrl() . Collection::getCollectionPath() . '/' . $this->getId(),
@@ -80,28 +126,28 @@ class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializ
         return $this;
     }
 
-
-    public function jsonSerialize()
+    public function jsonSerialize() : array
     {
-        return $this->data;
+        return $this->toArray();
     }
 
     public function jsonUnserialize(array $json)
     {
-        $this->data = $json;
+        $this->createFromArray($json);
     }
 
-    public function members()
+    public function members(Filter $filter = null) : UserCollection
     {
-        $response = $this->getClient()->get($this->getClient()->getApiUrl() . Collection::getCollectionPath() . '/' . $this->getId() .'/members');
+        $userCollection = new UserCollection();
+        $userCollection->setClient($this->getClient());
 
-        if ($response->getStatusCode() != '200') {
-            throw $this->getException($response);
+        if (is_null($filter)) {
+            $filter = new Filter();
+            $filter->setConversationId($this->getId());
         }
 
-        $data = json_decode($response->getBody()->getContents(), true);
-        $memberCollection = new UserCollection();
-        return $memberCollection->hydrateAll($data);
+        $userCollection->setFilter($filter);
+        return $userCollection;
     }
 
     public function addMember(User $user)
@@ -120,16 +166,22 @@ class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializ
             $this->getClient()->getApiUrl() . Collection::getCollectionPath() . '/' . $this->getId() .'/members/'. $user->getId()
         );
 
-        if ($response->getStatusCode() != '200') {
+        if ($response->getStatusCode() != '204') {
             throw $this->getException($response);
         }
     }
 
-    public function sendPostAction(User $user, $action, $channel = 'app')
+    public function sendPostAction(User $user, $action, $channel = 'app') : User
     {
-        $body = $user->getRequestDataForConversation();
-        $body['action'] = $action;
-        $body['channel'] = ['type' => $channel];
+        if (is_null($user->getId())) {
+            throw new \InvalidArgumentException('User must be created before it can be used with a Conversation');
+        }
+
+        $body = [
+            'user_id' => $user->getId(),
+            'action' => $action,
+            'channel' => ['type' => $channel]
+        ];
 
         $response = $this->getClient()->post(
             $this->getClient()->getApiUrl() . Collection::getCollectionPath() . '/' . $this->getId() .'/members',
@@ -149,7 +201,7 @@ class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializ
         return $user;
     }
 
-    protected function getException(ResponseInterface $response)
+    protected function getException(ResponseInterface $response) : \Exception
     {
         $body = json_decode($response->getBody()->getContents(), true);
         $status = $response->getStatusCode();
@@ -175,5 +227,33 @@ class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializ
         }
 
         return $e;
+    }
+
+    public function toArray() : array
+    {
+        return $this->data;
+    }
+
+    public function createFromArray(array $data) : void
+    {
+        if (array_key_exists('id', $data)) {
+            $this->data['id'] = $data['id'];
+        }
+
+        if (array_key_exists('name', $data)) {
+            $this->setName($data['name']);
+        }
+
+        if (array_key_exists('display_name', $data)) {
+            $this->setDisplayName($data['display_name']);
+        }
+
+        if (array_key_exists('image_url', $data)) {
+            $this->setImageUrl($data['image_url']);
+        }
+
+        if (array_key_exists('properties', $data)) {
+            $this->setProperties($data['properties']);
+        }
     }
 }

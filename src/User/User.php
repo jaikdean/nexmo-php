@@ -33,22 +33,70 @@ class User implements EntityInterface, \JsonSerializable, JsonUnserializableInte
         $this->data['id'] = $id;
     }
 
-    public function setName($name)
+    public function setName($name) : self
     {
         $this->data['name'] = $name;
         return $this;
     }
 
-    public function getId()
+    public function setDisplayName($displayName) : self
+    {
+        $this->data['display_name'] = $displayName;
+        return $this;
+    }
+
+    public function setImageUrl($imageUrl) : self
+    {
+        $this->data['image_url'] = $imageUrl;
+        return $this;
+    }
+
+    public function setProperties(array $properties) : self
+    {
+        $this->data['properties'] = $properties;
+        return $this;
+    }
+
+    public function setProperty(string $key, string $value) : self
+    {
+        $this->data['properties'][$key] = $value;
+        return $this;
+    }
+
+    public function getId() : ?string
     {
         return $this->data['id'];
+    }
+
+    public function getName() : string
+    {
+        return $this->data['name'];
+    }
+
+    public function getDisplayName() : string
+    {
+        return $this->data['display_name'];
+    }
+
+    public function getImageUrl() : string
+    {
+        return $this->data['image_url'];
+    }
+
+    public function getProperties() : array
+    {
+        return $this->data['properties'];
+    }
+
+    public function getProperty($key) : string
+    {
+        return $this->data['properties'][$key];
     }
 
     public function __toString()
     {
         return (string)$this->getId();
     }
-
 
     public function get()
     {
@@ -87,12 +135,12 @@ class User implements EntityInterface, \JsonSerializable, JsonUnserializableInte
 
     public function jsonSerialize()
     {
-        return $this->data;
+        return $this->toArray();
     }
 
     public function jsonUnserialize(array $json)
     {
-        $this->data = $json;
+        $this->createFromArray($json);
     }
 
     public function getRequestDataForConversation()
@@ -132,5 +180,39 @@ class User implements EntityInterface, \JsonSerializable, JsonUnserializableInte
         }
 
         return $e;
+    }
+
+    public function createFromArray(array $data) : void
+    {
+        if (array_key_exists('id', $data)) {
+            $this->data['id'] = $data['id'];
+        }
+
+        if (array_key_exists('name', $data)) {
+            $this->setName($data['name']);
+        }
+
+        if (array_key_exists('display_name', $data)) {
+            $this->setDisplayName($data['display_name']);
+        }
+
+        if (array_key_exists('image_url', $data)) {
+            $this->setImageUrl($data['image_url']);
+        }
+
+        if (array_key_exists('properties', $data)) {
+            $this->setProperties($data['properties']);
+        }
+    }
+
+    public function toArray() : array
+    {
+        return [
+            'id' => $this->getId(),
+            'name' => $this->getName(),
+            'display_name' => $this->getDisplayName(),
+            'image_url' => $this->getImageUrl(),
+            'properties' => $this->getProperties(),
+        ];
     }
 }

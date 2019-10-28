@@ -37,6 +37,8 @@ use Zend\Diactoros\Request;
  * @method \Nexmo\Application\Client applications()
  * @method \Nexmo\Call\Collection calls()
  * @method \Nexmo\Numbers\Client numbers()
+ * @method \Nexmo\Conversations\Collection conversations()
+ * @method \Nexmo\Conversations\Collection conversation()
  */
 class Client
 {
@@ -117,6 +119,7 @@ class Client
             'calls' => 'Nexmo\Call\Collection',
             'conversion' => 'Nexmo\Conversion\Client',
             'conversation' => 'Nexmo\Conversations\Collection',
+            'conversations' => 'Nexmo\Conversations\Collection',
             'user' => 'Nexmo\User\Collection',
             'redact' => 'Nexmo\Redact\Client',
         ], $this));

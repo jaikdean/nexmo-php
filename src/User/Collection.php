@@ -34,7 +34,7 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
 
     public static function getCollectionPath()
     {
-        return '/beta/' . self::getCollectionName();
+        return '/v0.1/' . self::getCollectionName();
     }
 
     public function hydrateEntity($data, $idOrUser)
@@ -66,10 +66,6 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
         return $hydrated;
     }
 
-    /**
-     * @param null $user
-     * @return $this|User
-     */
     public function __invoke(Filter $filter = null)
     {
         if (!is_null($filter)) {

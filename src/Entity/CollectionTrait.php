@@ -233,12 +233,12 @@ trait CollectionTrait
             $absoluteUri .= '?' . http_build_query($query);
         }
 
-        //
-        $request = new Request(
-            $this->getClient()->getApiUrl() . $absoluteUri,
-            'GET'
-        );
+        $requestUri = $absoluteUri;
+        if (filter_var($absoluteUri, FILTER_VALIDATE_URL) === false) {
+            $requestUri = $this->getClient()->getApiUrl() . $absoluteUri;
+        }
 
+        $request = new Request($requestUri, 'GET');
         $response = $this->client->send($request);
 
         if ($response->getStatusCode() != '200') {

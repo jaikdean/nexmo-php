@@ -8,6 +8,7 @@
 
 namespace Nexmo\Conversations;
 
+use InvalidArgumentException;
 use Nexmo\Client\ClientAwareInterface;
 use Nexmo\Client\ClientAwareTrait;
 use Nexmo\Entity\CollectionInterface;
@@ -18,6 +19,9 @@ use Nexmo\Entity\NoRequestResponseTrait;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Request;
 use Nexmo\Client\Exception;
+use Nexmo\Client\Exception\Request as NexmoRequest;
+use Nexmo\Client\Exception\Server;
+use RuntimeException;
 
 class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAccess
 {
@@ -59,11 +63,7 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
         return $hydrated;
     }
 
-    /**
-     * @param null $conversation
-     * @return $this|Conversation
-     */
-    public function __invoke(Filter $filter = null)
+    public function __invoke(Filter $filter = null) : self
     {
         if (!is_null($filter)) {
             $this->setFilter($filter);
@@ -77,13 +77,9 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
         return $this->post($conversation);
     }
 
-    public function post($conversation)
+    public function post(Conversation $conversation) : Conversation
     {
-        if ($conversation instanceof Conversation) {
-            $body = $conversation->getRequestData();
-        } else {
-            $body = $conversation;
-        }
+        $body = $conversation->toArray();
 
         $request = new Request(
             $this->getClient()->getApiUrl() . $this->getCollectionPath(),
@@ -101,7 +97,7 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
 
         $body = json_decode($response->getBody()->getContents(), true);
         $conversation = new Conversation($body['id']);
-        $conversation->jsonUnserialize($body);
+        $conversation->createFromArray($body);
         $conversation->setClient($this->getClient());
 
         return $conversation;
@@ -174,5 +170,48 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
     public function offsetUnset($offset)
     {
         throw new \RuntimeException('can not unset collection properties');
+    }
+
+    public function delete(Conversation $conversation) : bool
+    {
+        $request = new Request(
+            $this->getClient()->getApiUrl() . $this->getCollectionPath() . '/' . $conversation->getId(),
+            'DELETE',
+            'php://temp',
+            ['content-type' => 'application/json']
+        );
+
+        $response = $this->client->send($request);
+
+        if ($response->getStatusCode() == 204) {
+            return true;
+        } else {
+            $this->getException($response);
+        }
+
+        return false;
+    }
+
+    public function update(Conversation $conversation) : bool
+    {
+        $body = $conversation->toArray();
+
+        $request = new Request(
+            $this->getClient()->getApiUrl() . $this->getCollectionPath() . '/' . $conversation->getId(),
+            'PUT',
+            'php://temp',
+            ['content-type' => 'application/json']
+        );
+
+        $request->getBody()->write(json_encode($body));
+        $response = $this->client->send($request);
+
+        if ($response->getStatusCode() == 200) {
+            return true;
+        } else {
+            $this->getException($response);
+        }
+
+        return false;
     }
 }

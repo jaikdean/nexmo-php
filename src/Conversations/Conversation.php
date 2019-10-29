@@ -33,6 +33,11 @@ class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializ
 
     protected $data = [];
 
+    /**
+     * @var Events\Collection
+     */
+    protected $events;
+
     public function __construct($id = null)
     {
         $this->data['id'] = $id;
@@ -65,6 +70,12 @@ class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializ
     public function setProperty(string $key, string $value) : self
     {
         $this->data['properties'][$key] = $value;
+        return $this;
+    }
+
+    public function setEvents(Event\Collection $events) : self
+    {
+        $this->events = $events;
         return $this;
     }
 
@@ -101,11 +112,15 @@ class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializ
         return $this->data['properties'];
     }
 
+    public function getEvents()
+    {
+        return $this->events;
+    }
+
     public function __toString()
     {
         return (string)$this->getId();
     }
-
 
     public function get() : self
     {
@@ -122,6 +137,10 @@ class Conversation implements EntityInterface, \JsonSerializable, JsonUnserializ
 
         $data = json_decode($response->getBody()->getContents(), true);
         $this->jsonUnserialize($data);
+
+        $events = new Event\Collection($this);
+        $events->setClient($this->getClient());
+        $this->setEvents($events);
 
         return $this;
     }

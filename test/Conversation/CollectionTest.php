@@ -73,7 +73,7 @@ class CollectionTest extends TestCase
     public function testGetIsNotLazy($payload, $id)
     {
         $this->nexmoClient->send(Argument::that(function(RequestInterface $request) use ($id){
-            $this->assertRequestUrl('api.nexmo.com', '/beta/conversations/' . $id, 'GET', $request);
+            $this->assertRequestUrl('api.nexmo.com', '/v0.1/conversations/' . $id, 'GET', $request);
             return true;
         }))->willReturn($this->getResponse('conversation'))->shouldBeCalled();
 
@@ -91,7 +91,7 @@ class CollectionTest extends TestCase
     public function testCreatePostConversation($payload, $method)
     {
         $this->nexmoClient->send(Argument::that(function(RequestInterface $request) use ($payload){
-            $this->assertRequestUrl('api.nexmo.com', '/beta/conversations', 'POST', $request);
+            $this->assertRequestUrl('api.nexmo.com', '/v0.1/conversations', 'POST', $request);
             $this->assertRequestBodyIsJson(json_encode($payload), $request);
             return true;
         }))->willReturn($this->getResponse('conversation', '200'));
@@ -108,13 +108,15 @@ class CollectionTest extends TestCase
     public function testCreatePostConversationErrorFromVApi($payload, $method)
     {
         $this->nexmoClient->send(Argument::that(function(RequestInterface $request) use ($payload){
-            $this->assertRequestUrl('api.nexmo.com', '/beta/conversations', 'POST', $request);
+            $this->assertRequestUrl('api.nexmo.com', '/v0.1/conversations', 'POST', $request);
             $this->assertRequestBodyIsJson(json_encode($payload), $request);
             return true;
         }))->willReturn($this->getResponse('error_stitch', '400'));
 
         try {
-            $this->collection->$method($payload);
+            $conversation = new Conversation();
+            $conversation->createFromArray($payload);
+            $this->collection->$method($conversation);
             $this->fail('Expected to throw request exception');
         } catch (Exception\Request $e) {
             $this->assertEquals($e->getMessage(), 'the token was rejected');

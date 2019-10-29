@@ -6,7 +6,7 @@
  * @license   https://github.com/Nexmo/nexmo-php/blob/master/LICENSE.txt MIT License
  */
 
-namespace Nexmo\Conversations;
+namespace Nexmo\Conversations\Event;
 
 use InvalidArgumentException;
 use Nexmo\Client\ClientAwareInterface;
@@ -21,6 +21,9 @@ use Zend\Diactoros\Request;
 use Nexmo\Client\Exception;
 use Nexmo\Client\Exception\Request as NexmoRequest;
 use Nexmo\Client\Exception\Server;
+use Nexmo\Conversations\Conversation;
+use Nexmo\Conversations\Event\EventInterface;
+use Nexmo\Conversations\Event\Factory;
 use RuntimeException;
 
 class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAccess
@@ -31,37 +34,42 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
     use NoRequestResponseTrait;
     use JsonResponseTrait;
 
+    /**
+     * Base conversation that we will up against
+     * @var Conversation
+     */
+    protected $conversation;
+
+    public function __construct(Conversation $conversation)
+    {
+        $this->conversation = $conversation;
+    }
+
     public static function getCollectionName()
     {
         return 'conversations';
     }
 
-    public static function getCollectionPath()
+    public function getCollectionPath()
     {
-        return '/v0.1/' . self::getCollectionName();
+        return '/v0.1/' . $this->getCollectionName() . '/' . $this->conversation->getId();
     }
 
     public function hydrateEntity($data, $idOrConversation)
     {
-        if (!($idOrConversation instanceof Conversation)) {
-            $idOrConversation = new Conversation($idOrConversation);
-        }
-
-        $idOrConversation->setClient($this->getClient());
-        $idOrConversation->jsonUnserialize($data);
-
-        return $idOrConversation;
+        $event = Factory::build($data);
+        return $event;
     }
 
-    public function hydrateAll($conversations)
+    public function hydrateAll($events)
     {
         $hydrated = [];
-        foreach ($conversations as $conversation) {
-            $hydrated[] = $this->hydrateEntity($conversation, $conversation['id']);
+        foreach ($events as $event) {
+            $hydrated[] = $this->hydrateEntity($event, $event['id']);
         }
 
         return $hydrated;
-    }
+    } 
 
     public function __invoke(Filter $filter = null) : self
     {
@@ -103,16 +111,14 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
         return $conversation;
     }
 
-    public function get($conversation)
+    public function get($eventId)
     {
-        if (!($conversation instanceof Conversation)) {
-            $conversation = new Conversation($conversation);
-        }
+        $event = new Event();
+        $event->setId($eventId);
+        $event->setClient($this->getClient());
+        $event->get();
 
-        $conversation->setClient($this->getClient());
-        $conversation->get();
-
-        return $conversation;
+        return $event;
     }
 
     public function getEvents(Conversation $conversation)

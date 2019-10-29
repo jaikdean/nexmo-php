@@ -73,7 +73,7 @@ class CollectionTest extends TestCase
     public function testGetIsNotLazy($payload, $id)
     {
         $this->nexmoClient->send(Argument::that(function(RequestInterface $request) use ($id){
-            $this->assertRequestUrl('api.nexmo.com', '/beta/users/' . $id, 'GET', $request);
+            $this->assertRequestUrl('api.nexmo.com', '/v0.1/users/' . $id, 'GET', $request);
             return true;
         }))->willReturn($this->getResponse('user'))->shouldBeCalled();
 
@@ -88,7 +88,7 @@ class CollectionTest extends TestCase
     public function testCanFetchAllUsers()
     {
         $this->nexmoClient->send(Argument::that(function(RequestInterface $request){
-            $this->assertRequestUrl('api.nexmo.com', '/beta/users', 'GET', $request);
+            $this->assertRequestUrl('api.nexmo.com', '/v0.1/users', 'GET', $request);
             return true;
         }))->willReturn($this->getResponse('multiple_users'))->shouldBeCalled();
 
@@ -106,7 +106,7 @@ class CollectionTest extends TestCase
     public function testCreatePostConversation($payload, $method)
     {
         $this->nexmoClient->send(Argument::that(function(RequestInterface $request) use ($payload){
-            $this->assertRequestUrl('api.nexmo.com', '/beta/users', 'POST', $request);
+            $this->assertRequestUrl('api.nexmo.com', '/v0.1/users', 'POST', $request);
             $this->assertRequestBodyIsJson(json_encode($payload), $request);
             return true;
         }))->willReturn($this->getResponse('user', '200'));
@@ -123,7 +123,7 @@ class CollectionTest extends TestCase
     public function testCreatePostUserErrorFromStitch($payload, $method)
     {
         $this->nexmoClient->send(Argument::that(function(RequestInterface $request) use ($payload){
-            $this->assertRequestUrl('api.nexmo.com', '/beta/users', 'POST', $request);
+            $this->assertRequestUrl('api.nexmo.com', '/v0.1/users', 'POST', $request);
             $this->assertRequestBodyIsJson(json_encode($payload), $request);
             return true;
         }))->willReturn($this->getResponse('error_stitch', '400'));
@@ -142,7 +142,7 @@ class CollectionTest extends TestCase
     public function testCreatePostUserErrorFromProxy($payload, $method)
     {
         $this->nexmoClient->send(Argument::that(function(RequestInterface $request) use ($payload){
-            $this->assertRequestUrl('api.nexmo.com', '/beta/users', 'POST', $request);
+            $this->assertRequestUrl('api.nexmo.com', '/v0.1/users', 'POST', $request);
             $this->assertRequestBodyIsJson(json_encode($payload), $request);
             return true;
         }))->willReturn($this->getResponse('error_proxy', '400'));
@@ -161,7 +161,7 @@ class CollectionTest extends TestCase
     public function testCreatePostCallErrorUnknownFormat($payload, $method)
     {
         $this->nexmoClient->send(Argument::that(function(RequestInterface $request) use ($payload){
-            $this->assertRequestUrl('api.nexmo.com', '/beta/users', 'POST', $request);
+            $this->assertRequestUrl('api.nexmo.com', '/v0.1/users', 'POST', $request);
             $this->assertRequestBodyIsJson(json_encode($payload), $request);
             return true;
         }))->willReturn($this->getResponse('error_unknown_format', '400'));

@@ -26,71 +26,80 @@ class User implements EntityInterface, \JsonSerializable, JsonUnserializableInte
     use JsonResponseTrait;
     use ClientAwareTrait;
 
+    protected $id;
+    protected $name;
+    protected $displayName;
+    protected $imageUrl;
+    protected $properties = [];
+
+    /**
+     * @deprecated
+     */
     protected $data = [];
 
     public function __construct($id = null)
     {
-        $this->data['id'] = $id;
+        $this->id = $id;
     }
 
     public function setName($name) : self
     {
-        $this->data['name'] = $name;
+        $this->name = $name;
         return $this;
     }
 
     public function setDisplayName($displayName) : self
     {
-        $this->data['display_name'] = $displayName;
+        $this->displayName = $displayName;
         return $this;
     }
 
     public function setImageUrl($imageUrl) : self
     {
-        $this->data['image_url'] = $imageUrl;
+        $this->imageUrl = $imageUrl;
         return $this;
     }
 
     public function setProperties(array $properties) : self
     {
-        $this->data['properties'] = $properties;
+        $this->properties = $properties;
         return $this;
     }
 
     public function setProperty(string $key, string $value) : self
     {
-        $this->data['properties'][$key] = $value;
+        $this->properties[$key] = $value;
         return $this;
     }
 
     public function getId() : ?string
     {
-        return $this->data['id'];
+        return $this->id;
     }
 
-    public function getName() : string
+    public function getName() : ?string
     {
-        return $this->data['name'];
+        return $this->name;
     }
 
-    public function getDisplayName() : string
+    public function getDisplayName() : ?string
     {
-        return $this->data['display_name'];
+        return $this->displayName;
     }
 
-    public function getImageUrl() : string
+    public function getImageUrl() : ?string
     {
-        return $this->data['image_url'];
+        return $this->imageUrl;
     }
 
     public function getProperties() : array
     {
-        return $this->data['properties'];
+        return $this->properties;
     }
 
-    public function getProperty($key) : string
+    public function getProperty($key) : ?string
     {
-        return $this->data['properties'][$key];
+        return array_key_exists($key, $this->properties) ? $this->properties[$key] : null;
     }
 
     public function __toString()

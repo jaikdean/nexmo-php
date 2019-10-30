@@ -20,6 +20,7 @@ use Nexmo\Client\Factory\FactoryInterface;
 use Nexmo\Client\Factory\MapFactory;
 use Nexmo\Client\Response\Response;
 use Nexmo\Client\Signature;
+use Nexmo\Conversations\API;
 use Nexmo\Entity\EntityInterface;
 use Nexmo\Verify\Verification;
 use Psr\Http\Message\RequestInterface;
@@ -118,8 +119,13 @@ class Client
             'numbers' => 'Nexmo\Numbers\Client',
             'calls' => 'Nexmo\Call\Collection',
             'conversion' => 'Nexmo\Conversion\Client',
-            'conversation' => 'Nexmo\Conversations\Collection',
-            'conversations' => 'Nexmo\Conversations\Collection',
+            'conversations' => function ($nexmoClient) {
+                $apiClient = new \Nexmo\Conversations\API();
+                $apiClient->setClient($nexmoClient);
+                $conversationsClient = new \Nexmo\Conversations\Client();
+                $conversationsClient->setAPI($apiClient);
+                return $conversationsClient;
+            },
             'user' => 'Nexmo\User\Collection',
             'redact' => 'Nexmo\Redact\Client',
         ], $this));

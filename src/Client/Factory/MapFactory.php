@@ -57,9 +57,13 @@ class MapFactory implements FactoryInterface
             ));
         }
 
-        $class = $this->map[$api];
+        if (is_callable($this->map[$api])) {
+            $instance = $this->map[$api]($this->client);
+        } else {
+            $class = $this->map[$api];
+            $instance = new $class();
+        }
 
-        $instance = new $class();
         if ($instance instanceof Client\ClientAwareInterface) {
             $instance->setClient($this->client);
         }

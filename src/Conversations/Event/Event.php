@@ -2,7 +2,9 @@
 
 namespace Nexmo\Conversations\Event;
 
-class Event
+use Nexmo\Entity\ArrayHydrateInterface;
+
+class Event implements ArrayHydrateInterface
 {
     protected $id;
 
@@ -107,5 +109,25 @@ class Event
         if (array_key_exists('type', $data)) {
             $this->setType($data['type']);
         }
+    }
+
+    public function toArray() : array
+    {
+        $data = [
+            'id' => $this->getId(),
+            'body' => $this->getBody(),
+            'type' => $this->getType(),
+            'from' => $this->getFrom(),
+        ];
+
+        if ($this->getTimestamp()) {
+            $data['timestamp'] = $this->getTimestamp()->format(\DateTimeInterface::RFC3339_EXTENDED);
+        }
+
+        if ('text' == $this->getType()) {
+            $data['conversation_id'] = $this->getConversationId();
+        }
+
+        return $data;
     }
 }

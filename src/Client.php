@@ -18,9 +18,14 @@ use Nexmo\Client\Credentials\SignatureSecret;
 use Nexmo\Client\Exception\Exception;
 use Nexmo\Client\Factory\FactoryInterface;
 use Nexmo\Client\Factory\MapFactory;
+use Nexmo\Client\OpenAPIResource;
 use Nexmo\Client\Response\Response;
 use Nexmo\Client\Signature;
-use Nexmo\Conversations\API;
+use Nexmo\Conversations\API as ConversationsAPI;
+use Nexmo\Conversations\Event\API as ConversationEventAPI;
+use Nexmo\Conversations\Event\Client as ConversationEventClient;
+use Nexmo\Conversations\Event\Hydrator as ConversationEventHydrator;
+use Nexmo\Conversations\Hydrator as ConversationsHydrator;
 use Nexmo\Entity\EntityInterface;
 use Nexmo\Verify\Verification;
 use Psr\Http\Message\RequestInterface;
@@ -119,16 +124,31 @@ class Client
             'numbers' => 'Nexmo\Numbers\Client',
             'calls' => 'Nexmo\Call\Collection',
             'conversion' => 'Nexmo\Conversion\Client',
-            'conversations' => function ($nexmoClient) {
-                $apiClient = new \Nexmo\Conversations\API();
-                $apiClient->setClient($nexmoClient);
-                $conversationsClient = new \Nexmo\Conversations\Client();
-                $conversationsClient->setAPI($apiClient);
-                $conversationsClient->setClient($nexmoClient);
-                return $conversationsClient;
+            'conversations' => function ($factory) {
+                /** @var OpenAPIResource $api */
+                $api = $factory->get(OpenAPIResource::class);
+                $api->setBaseUri('/v0.1/conversations');
+                $api->setCollectionName('conversations');
+
+                return new \Nexmo\Conversations\Client(
+                    $api,
+                    $factory->get(ConversationsHydrator::class)
+                );
             },
             'user' => 'Nexmo\User\Collection',
             'redact' => 'Nexmo\Redact\Client',
+            OpenAPIResource::class => OpenAPIResource::class,
+            ConversationsHydrator::class => function ($factory) {
+                return new ConversationsHydrator($factory->get(ConversationEventClient::class));
+            },
+            ConversationEventAPI::class => ConversationEventAPI::class,
+            ConversationEventClient::class => function ($factory) {
+                return new ConversationEventClient(
+                    $factory->get(ConversationEventAPI::class),
+                    $factory->get(ConversationEventHydrator::class)
+                );
+            },
+            ConversationEventHydrator::class => ConversationEventHydrator::class,
         ], $this));
     }
 

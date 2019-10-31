@@ -4,52 +4,54 @@ namespace Nexmo\Conversations;
 
 use Nexmo\Client\ClientAwareInterface;
 use Nexmo\Client\ClientAwareTrait;
+use Nexmo\Client\OpenAPIResource;
 use Nexmo\Entity\Collection;
-use Nexmo\Conversations\Event\Event;
 
 class Client implements ClientAwareInterface
 {
     use ClientAwareTrait;
 
-    protected $api;
+    /**
+     * @var API
+     */
+    protected $conversationAPI;
+    
+    /**
+     * @var Hydrator
+     */
+    protected $hydrator;
+
+    public function __construct(OpenAPIResource $conversationAPI, Hydrator $hydrator)
+    {
+        $this->conversationAPI = $conversationAPI;
+        $this->hydrator = $hydrator;
+    }
 
     public function delete(Conversation $conversation) : void
     {
-        $this->api->deleteConversation($conversation);
-    }
-
-    protected function fillGenerators(Conversation $conversation) : Conversation
-    {
-        $conversation->setEvents($this->api->getEventsGenerator($conversation));
-        $conversation->getEvents()->setPrototype(Event::class);
-
-        return $conversation;
+        $this->conversationAPI->deleteConversation($conversation);
     }
 
     public function get(string $id) : Conversation
     {
-        $data = $this->api->getConversation($id);
-
-        $conversation = new Conversation();
-        $conversation->createFromArray($data);
-        $conversation = $this->fillGenerators($conversation);
+        $data = $this->conversationAPI->get($id);
+        $conversation = $this->hydrator->hydrate($data);
 
         return $conversation;
     }
 
     public function create(Conversation $conversation) : Conversation
     {
-        $response = $this->api->createConversation($conversation);
-        $conversation->createFromArray($response);
-        $conversation = $this->fillGenerators($conversation);
+        $response = $this->conversationAPI->create($conversation);
+        $conversation = $this->hydrator->hydrate($response);
 
         return $conversation;
     }
 
     public function search(FilterInterface $filter = null) : Collection
     {
-        $collection = $this->api->searchConversations($filter);
-        $collection->setPrototype(Conversation::class);
+        $collection = $this->conversationAPI->search($filter);
+        $collection->setHydrator($this->hydrator);
 
         return $collection;
     }
@@ -61,8 +63,8 @@ class Client implements ClientAwareInterface
 
     public function update(Conversation $conversation) : Conversation
     {
-        $data = $this->api->updateConversation($conversation);
-        $conversation->createFromArray($data);
+        $data = $this->conversationAPI->update($conversation);
+        $conversation = $this->hydrator->hydrate($data);
 
         return $conversation;
     }

@@ -2,9 +2,13 @@
 
 namespace Nexmo\Conversations;
 
+use Nexmo\Conversations\Event\Client as EventClient;
+use Nexmo\Conversations\Event\Event;
+use Nexmo\Entity\ArrayHydrateInterface;
 use Nexmo\Entity\Collection;
+use Nexmo\Entity\EmptyFilter;
 
-class Conversation
+class Conversation implements ArrayHydrateInterface
 {
     /**
      * @var string
@@ -17,9 +21,9 @@ class Conversation
     protected $displayName;
 
     /**
-     * @var Collection
+     * @var EventClient
      */
-    protected $events;
+    protected $eventClient;
 
     /**
      * @var string
@@ -40,6 +44,11 @@ class Conversation
      * @var \DateTimeImmutable
      */
     protected $timestamp;
+
+    public function addEvent(Event $event)
+    {
+        return $this->eventClient->create($event);
+    }
 
     public function createFromArray($data)
     {
@@ -62,6 +71,11 @@ class Conversation
         if (array_key_exists('timestamp', $data)) {
             $this->setTimestamp(new \DateTimeImmutable($data['timestamp']['created']));
         }
+    }
+
+    public function deleteEvent(Event $event) : void
+    {
+        $this->getEventClient()->delete($event);
     }
 
     public function toArray() : array
@@ -90,9 +104,27 @@ class Conversation
         return $this->displayName;
     }
 
-    public function getEvents()
+    public function getEvent(string $id) : Event
     {
-        return $this->events;
+        return $this->getEventClient()->get($id);
+    }
+
+    public function getEvents(FilterInterface $filter = null) : Collection
+    {
+        if (is_null($filter)) {
+            $filter = new EmptyFilter();
+        }
+
+        return $this->getEventClient()->search($filter);
+    }
+
+    public function getEventClient() : EventClient
+    {
+        if (!$this->eventClient) {
+            throw new \RuntimeException('Events Client was called but has not been configured');
+        }
+
+        return $this->eventClient;
     }
 
     public function getImageUrl() : ?string
@@ -132,9 +164,11 @@ class Conversation
         return $this;
     }
 
-    public function setEvents(Collection $events) : self
+    public function setEventClient(EventClient $eventClient) : self
     {
-        $this->events = $events;
+        $this->eventClient = $eventClient;
+        $this->eventClient->getAPI()->setConversation($this);
+
         return $this;
     }
 

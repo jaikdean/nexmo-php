@@ -66,6 +66,8 @@ class Collection implements ClientAwareInterface, Iterator
      */
     protected $collectionPath;
 
+    protected $hydrator;
+
     protected $prototype;
 
     public function getCollectionName()
@@ -90,17 +92,16 @@ class Collection implements ClientAwareInterface, Iterator
         return $this;
     }
 
-    public function setPrototype(string $className) : self
+    public function setHydrator($hydrator) : self
     {
-        $this->prototype = $className;
+        $this->hydrator = $hydrator;
         return $this;
     }
     
     public function hydrateEntity($data, $id = null)
     {
-        if ($this->prototype) {
-            $object = new $this->prototype;
-            $object->createFromArray($data);
+        if ($this->hydrator) {
+            $object = $this->hydrator->hydrate($data);
             return $object;
         }
 

@@ -12,58 +12,58 @@ class Client implements ClientAwareInterface
     use ClientAwareTrait;
 
     /**
-     * @var API
+     * @var OpenAPIResource
      */
-    protected $conversationAPI;
-    
+    protected $api;
+
     /**
      * @var Hydrator
      */
     protected $hydrator;
 
-    public function __construct(OpenAPIResource $conversationAPI, Hydrator $hydrator)
+    public function __construct(OpenAPIResource $api, Hydrator $hydrator)
     {
-        $this->conversationAPI = $conversationAPI;
+        $this->api = $api;
         $this->hydrator = $hydrator;
-    }
-
-    public function delete(Conversation $conversation) : void
-    {
-        $this->conversationAPI->deleteConversation($conversation);
-    }
-
-    public function get(string $id) : Conversation
-    {
-        $data = $this->conversationAPI->get($id);
-        $conversation = $this->hydrator->hydrate($data);
-
-        return $conversation;
     }
 
     public function create(Conversation $conversation) : Conversation
     {
-        $response = $this->conversationAPI->create($conversation);
+        $response = $this->getApi()->create($conversation);
         $conversation = $this->hydrator->hydrate($response);
 
         return $conversation;
     }
 
+    public function delete(Conversation $conversation) : void
+    {
+        $this->getApi()->delete($conversation);
+    }
+
+    public function get(string $id) : Conversation
+    {
+        $data = $this->getApi()->get($id);
+        $conversation = $this->hydrator->hydrate($data);
+
+        return $conversation;
+    }
+
+    public function getApi() : OpenAPIResource
+    {
+        return $this->api;
+    }
+
     public function search(FilterInterface $filter = null) : Collection
     {
-        $collection = $this->conversationAPI->search($filter);
+        $collection = $this->getApi()->search($filter);
         $collection->setHydrator($this->hydrator);
 
         return $collection;
     }
 
-    public function setAPI(API $api)
-    {
-        $this->api = $api;
-    }
-
     public function update(Conversation $conversation) : Conversation
     {
-        $data = $this->conversationAPI->update($conversation);
+        $data = $this->getApi()->update($conversation);
         $conversation = $this->hydrator->hydrate($data);
 
         return $conversation;

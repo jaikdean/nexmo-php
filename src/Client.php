@@ -124,6 +124,7 @@ class Client
                 $apiClient->setClient($nexmoClient);
                 $conversationsClient = new \Nexmo\Conversations\Client();
                 $conversationsClient->setAPI($apiClient);
+                $conversationsClient->setClient($nexmoClient);
                 return $conversationsClient;
             },
             'user' => 'Nexmo\User\Collection',

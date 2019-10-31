@@ -56,6 +56,21 @@ class API implements ClientAwareInterface
         return $body;
     }
 
+    public function getEventsGenerator(Conversation $conversation) : Collection
+    {
+        $events = new Collection();
+        $events
+            ->setCollectionName('events')
+            ->setCollectionPath(
+                $this->getClient()->getApiUrl() . $this->baseUri . '/' . $conversation->getId() . '/events'
+            )
+        ;
+        $events->setClient($this->client);
+        $events->rewind();
+
+        return $events;
+    }
+
     public function searchConversations(FilterInterface $filter = null) : Collection
     {
         if (is_null($filter)) {

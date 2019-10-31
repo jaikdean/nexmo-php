@@ -2,6 +2,8 @@
 
 namespace Nexmo\Conversations;
 
+use Nexmo\Entity\Collection;
+
 class Conversation
 {
     /**
@@ -13,6 +15,11 @@ class Conversation
      * @var string
      */
     protected $displayName;
+
+    /**
+     * @var Collection
+     */
+    protected $events;
 
     /**
      * @var string
@@ -83,6 +90,11 @@ class Conversation
         return $this->displayName;
     }
 
+    public function getEvents()
+    {
+        return $this->events;
+    }
+
     public function getImageUrl() : ?string
     {
         return $this->imageUrl;
@@ -117,6 +129,12 @@ class Conversation
     public function setDisplayName(string $displayName) : self
     {
         $this->displayName = $displayName;
+        return $this;
+    }
+
+    public function setEvents(Collection $events) : self
+    {
+        $this->events = $events;
         return $this;
     }
 

@@ -14,15 +14,16 @@ use Nexmo\Entity\EntityInterface;
 use Nexmo\Entity\JsonResponseTrait;
 use Nexmo\Entity\JsonSerializableTrait;
 use Nexmo\Entity\JsonUnserializableInterface;
-use Nexmo\Entity\NoRequestResponseTrait;
 use Zend\Diactoros\Request;
 use Nexmo\Client\Exception;
+use Nexmo\Client\Request\RequestInterface;
+use Nexmo\Entity\Psr7Trait;
 use Psr\Http\Message\ResponseInterface;
 
 class User implements EntityInterface, \JsonSerializable, JsonUnserializableInterface, ClientAwareInterface
 {
-    use NoRequestResponseTrait;
     use JsonSerializableTrait;
+    use Psr7Trait;
     use JsonResponseTrait;
     use ClientAwareTrait;
 
@@ -209,8 +210,8 @@ class User implements EntityInterface, \JsonSerializable, JsonUnserializableInte
             $this->setImageUrl($data['image_url']);
         }
 
-        if (array_key_exists('properties', $data)) {
-            $this->setProperties($data['properties']);
+        if (array_key_exists('custom_data', $data)) {
+            $this->setProperties($data['custom_data']);
         }
     }
 
@@ -221,7 +222,7 @@ class User implements EntityInterface, \JsonSerializable, JsonUnserializableInte
             'name' => $this->getName(),
             'display_name' => $this->getDisplayName(),
             'image_url' => $this->getImageUrl(),
-            'properties' => $this->getProperties(),
+            'custom_data' => $this->getProperties(),
         ];
     }
 }

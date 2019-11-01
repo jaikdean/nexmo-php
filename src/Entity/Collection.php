@@ -13,6 +13,7 @@ use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Request;
 use Nexmo\Client\ClientAwareInterface;
 use Nexmo\Client\ClientAwareTrait;
+use Nexmo\Client\Exception;
 
 /**
  * Common code for iterating over a collection, and using the collection class to discover the API path.
@@ -300,5 +301,37 @@ class Collection implements ClientAwareInterface, Iterator
 
         $this->response = $response;
         $this->page = json_decode($this->response->getBody()->getContents(), true);
+    }
+
+    protected function getException(ResponseInterface $response)
+    {
+        $body = json_decode($response->getBody()->getContents(), true);
+        $status = $response->getStatusCode();
+
+        // Error responses aren't consistent. Some are generated within the
+        // proxy and some are generated within voice itself. This handles
+        // both cases
+
+        // This message isn't very useful, but we shouldn't ever see it
+        $errorTitle = 'Unexpected error';
+
+        if (isset($body['title'])) {
+            $errorTitle = $body['title'];
+        }
+
+        if (isset($body['error_title'])) {
+            $errorTitle = $body['error_title'];
+        }
+
+        if ($status >= 400 and $status < 500) {
+            $e = new Exception\Request($errorTitle, $status);
+        } elseif ($status >= 500 and $status < 600) {
+            $e = new Exception\Server($errorTitle, $status);
+        } else {
+            $e = new Exception\Exception('Unexpected HTTP Status Code');
+            throw $e;
+        }
+
+        return $e;
     }
 }

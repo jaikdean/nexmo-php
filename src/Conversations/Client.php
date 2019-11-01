@@ -29,7 +29,14 @@ class Client implements ClientAwareInterface
 
     public function create(Conversation $conversation) : Conversation
     {
-        $response = $this->getApi()->create($conversation);
+        $body = [
+            'name' => $conversation->getName(),
+            'display_name' => $conversation->getDisplayName(),
+            'image_url' => $conversation->getImageUrl(),
+            'properties' => $conversation->getProperties(),
+        ];
+
+        $response = $this->getApi()->create($body);
         $conversation = $this->hydrator->hydrate($response);
 
         return $conversation;
@@ -37,7 +44,7 @@ class Client implements ClientAwareInterface
 
     public function delete(Conversation $conversation) : void
     {
-        $this->getApi()->delete($conversation);
+        $this->getApi()->delete($conversation->getId());
     }
 
     public function get(string $id) : Conversation
@@ -63,7 +70,14 @@ class Client implements ClientAwareInterface
 
     public function update(Conversation $conversation) : Conversation
     {
-        $data = $this->getApi()->update($conversation);
+        $body = [
+            'name' => $conversation->getName(),
+            'display_name' => $conversation->getDisplayName(),
+            'image_url' => $conversation->getImageUrl(),
+            'properties' => $conversation->getProperties(),
+        ];
+
+        $data = $this->getApi()->update($conversation->getId(), $body);
         $conversation = $this->hydrator->hydrate($data);
 
         return $conversation;

@@ -4,9 +4,12 @@ namespace Nexmo\Conversations;
 
 use Nexmo\Conversations\Event\Client as EventClient;
 use Nexmo\Conversations\Event\Event;
+use Nexmo\Conversations\Member\Member;
+use Nexmo\Conversations\Member\Client as MemberClient;
 use Nexmo\Entity\ArrayHydrateInterface;
 use Nexmo\Entity\Collection;
 use Nexmo\Entity\EmptyFilter;
+use Nexmo\User\User;
 
 class Conversation implements ArrayHydrateInterface
 {
@@ -31,6 +34,11 @@ class Conversation implements ArrayHydrateInterface
     protected $imageUrl;
 
     /**
+     * @var MemberClient
+     */
+    protected $memberClient;
+
+    /**
      * @var string
      */
     protected $name;
@@ -48,6 +56,11 @@ class Conversation implements ArrayHydrateInterface
     public function addEvent(Event $event)
     {
         return $this->eventClient->create($event);
+    }
+
+    public function addMember(User $user, $action = 'invite')
+    {
+        return $this->getMemberClient()->create($user, $action);
     }
 
     public function createFromArray($data)
@@ -76,6 +89,11 @@ class Conversation implements ArrayHydrateInterface
     public function deleteEvent(Event $event) : void
     {
         $this->getEventClient()->delete($event);
+    }
+
+    public function deleteMember(Member $member) : void
+    {
+        $this->getMemberClient()->delete($member);
     }
 
     public function toArray() : array
@@ -132,6 +150,25 @@ class Conversation implements ArrayHydrateInterface
         return $this->imageUrl;
     }
 
+    public function getMembers(FilterInterface $filter = null) : Collection
+    {
+        if (is_null($filter)) {
+            $filter = new EmptyFilter();
+        }
+
+        return $this->getMemberClient()->search($filter);
+    }
+
+    public function getMember(string $id) : Member
+    {
+        return $this->getMemberClient()->get($id);
+    }
+
+    public function getMemberClient()
+    {
+        return $this->memberClient;
+    }
+
     public function getName() : ?string
     {
         return $this->name;
@@ -150,6 +187,17 @@ class Conversation implements ArrayHydrateInterface
     public function getTimestamp() : ?\DateTimeImmutable
     {
         return $this->timestamp;
+    }
+
+    /**
+     * Convienance method to join a member to an existing conversation
+     */
+    public function joinMember(Member $member)
+    {
+        $member->setState('join');
+        $member->setChannel('app');
+
+        return $this->updateMember($member);
     }
 
     public function setId(string $id) : self
@@ -178,6 +226,13 @@ class Conversation implements ArrayHydrateInterface
         return $this;
     }
 
+    public function setMemberClient(MemberClient $memberClient) : self
+    {
+        $this->memberClient = $memberClient;
+        $this->memberClient->getApi()->setConversation($this);
+        return $this;
+    }
+
     public function setName(string $name) : self
     {
         $this->name = $name;
@@ -200,5 +255,10 @@ class Conversation implements ArrayHydrateInterface
     {
         $this->timestamp = $timestamp;
         return $this;
+    }
+
+    public function updateMember(Member $member) : Member
+    {
+        return $this->getMemberClient()->update($member);
     }
 }

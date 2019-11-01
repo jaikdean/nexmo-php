@@ -16,6 +16,8 @@ class Event implements ArrayHydrateInterface
     
     protected $timestamp;
 
+    protected $to;
+
     protected $type;
 
     public function getId() : ?string
@@ -41,6 +43,11 @@ class Event implements ArrayHydrateInterface
     public function getTimestamp() : ?\DateTimeImmutable
     {
         return $this->timestamp;
+    }
+
+    public function getTo() : ?string
+    {
+        return $this->to;
     }
 
     public function getType() : ?string
@@ -75,6 +82,12 @@ class Event implements ArrayHydrateInterface
     public function setTimestamp(\DateTimeImmutable $timestamp) : self
     {
         $this->timestamp = $timestamp;
+        return $this;
+    }
+
+    public function setTo(string $to) : self
+    {
+        $this->to = $to;
         return $this;
     }
 

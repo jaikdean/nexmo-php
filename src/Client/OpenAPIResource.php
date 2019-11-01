@@ -2,7 +2,6 @@
 
 namespace Nexmo\Client;
 
-use Nexmo\Entity\ArrayHydrateInterface;
 use Nexmo\Entity\Collection;
 use Nexmo\Entity\EmptyFilter;
 use Nexmo\Entity\FilterInterface;
@@ -17,11 +16,8 @@ class OpenAPIResource implements ClientAwareInterface
 
     protected $collectionName;
 
-    public function create(ArrayHydrateInterface $entity)
+    public function create(array $body)
     {
-        $body = $entity->toArray();
-        unset($body['id'], $body['timestamp']);
-
         $request = new Request(
             $this->getClient()->getApiUrl() . $this->baseUri,
             'POST',
@@ -39,9 +35,9 @@ class OpenAPIResource implements ClientAwareInterface
         return json_decode($response->getBody()->getContents(), true);
     }
 
-    public function delete(ArrayHydrateInterface $entity) : void
+    public function delete(string $id) : void
     {
-        $uri = $this->getClient()->getApiUrl() . $this->baseUri . '/' . $entity->getId();
+        $uri = $this->getClient()->getApiUrl() . $this->baseUri . '/' . $id;
         $request = new Request($uri, 'DELETE');
 
         $response = $this->getClient()->send($request);
@@ -125,12 +121,10 @@ class OpenAPIResource implements ClientAwareInterface
         return $this;
     }
 
-    public function update(ArrayHydrateInterface $entity) : array
+    public function update(string $id, array $body) : array
     {
-        $body = $entity->toArray();
-
         $request = new Request(
-            $this->getClient()->getApiUrl() . $this->baseUri . '/' . $entity->getId(),
+            $this->getClient()->getApiUrl() . $this->baseUri . '/' . $id,
             'PUT',
             'php://temp',
             ['content-type' => 'application/json']

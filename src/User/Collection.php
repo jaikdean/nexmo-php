@@ -19,6 +19,9 @@ use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Request;
 use Nexmo\Client\Exception;
 
+/**
+ * @todo Move this over to the client/API paradigm
+ */
 class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAccess
 {
     use ClientAwareTrait;
@@ -93,6 +96,8 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
         } else {
             $body = $user;
         }
+
+        unset($body['id']);
 
         $request = new Request(
             $this->getClient()->getApiUrl() . $this->getCollectionPath(),
@@ -187,5 +192,62 @@ class Collection implements ClientAwareInterface, CollectionInterface, \ArrayAcc
     public function offsetUnset($offset)
     {
         throw new \RuntimeException('can not unset collection properties');
+    }
+
+    public function put(User $user)
+    {
+        $body = $user->getRequestData(false);
+        $id = $body['id'];
+        unset($body['id']);
+
+        $request = new Request(
+            $this->getClient()->getApiUrl() . $this->getCollectionPath() . '/' . $id,
+            'PUT',
+            'php://temp',
+            ['Content-Type' => 'application/json']
+        );
+
+        $request->getBody()->write(json_encode($body));
+        $user->setRequest($request);
+        $response = $this->client->send($request);
+        $user->setResponse($response);
+
+        if ($response->getStatusCode() != '200') {
+            throw $this->getException($response, $application);
+        }
+
+        return $user;
+    }
+
+    public function delete($user)
+    {
+        if (($user instanceof User)) {
+            $id = $user->getId();
+        } else {
+            $id = $user;
+        }
+
+        $request = new Request(
+            $this->getClient()->getApiUrl(). $this->getCollectionPath() . '/' . $id,
+            'DELETE',
+            'php://temp',
+            ['Content-Type' => 'application/json']
+        );
+
+        if ($user instanceof User) {
+            $user->setRequest($request);
+        }
+
+        $response = $this->client->send($request);
+
+        if ($user instanceof User) {
+            $user->setResponse($response);
+        }
+
+        if ($response->getStatusCode() != '204') {
+            throw $this->getException($response, $user);
+        }
+
+        return true;
     }
 }

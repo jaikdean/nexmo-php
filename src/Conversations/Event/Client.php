@@ -30,7 +30,14 @@ class Client implements ClientAwareInterface
 
     public function create(Event $event) : Event
     {
-        $response = $this->getApi()->create($event);
+        $body = [
+            'type' => $event->getType(),
+            'body' => $event->getBody(),
+            'to' => $event->getTo(),
+            'from' => $event->getFrom(),
+        ];
+
+        $response = $this->getApi()->create($body);
         $event = $this->hydrator->hydrate($response);
 
         return $event;
@@ -38,7 +45,7 @@ class Client implements ClientAwareInterface
 
     public function delete(Event $event) : void
     {
-        $this->getApi()->delete($event);
+        $this->getApi()->delete($event->getId());
     }
 
     public function get(string $id) : Event
